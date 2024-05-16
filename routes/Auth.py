@@ -48,7 +48,7 @@ def session_login():
         response = jsonify({"status": "success"})
         expires = datetime.datetime.utcnow() + datetime.timedelta(seconds=expires_in)
         response = response
-        response.set_cookie('session', session_cookie, expires=expires, httponly=True, secure=True)
+        response.set_cookie('session', session_cookie, expires=expires, httponly=True, secure=False, samesite='Lax')
         return response
     except Exception as e:
         return jsonify({"error": "Failed to create a session cookie", "message": str(e)}), 401

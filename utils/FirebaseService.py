@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
@@ -68,10 +68,10 @@ class FirebaseService:
             user_id = click_data.pop('user_id')
             user = auth.get_user(user_id)
             email = user.email
-            current_date = datetime.utcnow().strftime('%Y-%m-%d')
+            current_date = datetime.datetime.utcnow().strftime('%Y-%m-%d')
             user_doc_ref = FirebaseService.db.collection('user_clicks').document(user_id)
             all_clicks_ref = FirebaseService.db.collection('user_clicks').document("all_clicks")
-            click_data['timestamp'] = datetime.utcnow()
+            click_data['timestamp'] = datetime.datetime.utcnow()
 
             user_doc = user_doc_ref.get()
             if user_doc.exists:
