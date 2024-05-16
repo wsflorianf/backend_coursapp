@@ -5,6 +5,7 @@ from datetime import datetime
 from flask import Blueprint, request, jsonify
 import concurrent.futures
 
+from routes.Auth import verify_token_middleware
 from utils.Scrapers.PlaziScraper import PlatziScraper
 from utils.Scrapers.UdacityScraper import UdacityScraper
 from utils.Scrapers.DomestikaScraper import DomestikaScraper
@@ -15,6 +16,7 @@ routes_scrap = Blueprint("routes_scrap", __name__)
 
 
 @routes_scrap.route("/search", methods=['GET'])
+@verify_token_middleware
 def search_courses():
     query = request.args.get('search-query', default='', type=str)
     # Obtener los flags de activación para cada plataforma desde los parámetros de la URL
