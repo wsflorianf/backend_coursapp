@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
 
@@ -60,3 +62,46 @@ class FirebaseService:
             log_data.update(extra_info)
         doc_ref.set(log_data)
 
+    @staticmethod
+    def log_click(click_data):
+        try:
+            user_id = click_data.pop('user_id')
+            user = auth.get_user(user_id)
+            email = user.email
+            current_date = datetime.utcnow().strftime('%Y-%m-%d')
+            user_doc_ref = FirebaseService.db.collection('user_clicks').document(user_id)
+            all_clicks_ref = FirebaseService.db.collection('user_clicks').document("all_clicks")
+            click_data['timestamp'] = datetime.utcnow()
+
+            user_doc = user_doc_ref.get()
+            if user_doc.exists:
+                user_data = user_doc.to_dict()
+                daily_clicks = user_data.get(current_date, {}).get('clicks', [])
+                if not isinstance(daily_clicks, list):
+                    daily_clicks = []
+            else:
+                daily_clicks = []
+
+            click_data_with_user_id = {**click_data, 'user_id': user_id}
+            daily_clicks.append(click_data)
+            user_doc_ref.set({
+                current_date: {'clicks': daily_clicks},
+                'email': email
+            }, merge=True)
+
+            all_doc = all_clicks_ref.get()
+            if all_doc.exists:
+                all_data = all_doc.to_dict()
+                all_daily_clicks = all_data.get(current_date, {}).get('clicks', [])
+                if not isinstance(all_daily_clicks, list):
+                    all_daily_clicks = []
+            else:
+                all_daily_clicks = []
+
+            all_daily_clicks.append(click_data_with_user_id)
+            all_clicks_ref.set({
+                current_date: {'clicks': all_daily_clicks}
+            }, merge=True)
+
+        except Exception as e:
+            raise Exception(f"Error logging click: {str(e)}")

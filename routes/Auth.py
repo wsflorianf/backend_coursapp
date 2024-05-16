@@ -2,7 +2,8 @@ import datetime
 
 from flask import Blueprint, request, jsonify, session
 
-from utils.authentication import *
+from utils.FirebaseService import *
+from flask import g
 from functools import wraps
 from firebase_admin.exceptions import FirebaseError
 
@@ -14,13 +15,12 @@ def verify_token_middleware(func):
     def wrapper(*args, **kwargs):
         session_cookie = request.cookies.get('session')
         if not session_cookie:
-            return jsonify({"error": "Unauthorized"}), 401
+            return jsonify({"error": "No session cookie found"}), 401
         try:
             decoded_claims = auth.verify_session_cookie(session_cookie, check_revoked=True)
-            request.decoded_claims = decoded_claims
+            g.decoded_claims = decoded_claims
         except FirebaseError as e:
-            return jsonify({"error": "Invalid session cookie", "message": str(e)}), 403
-
+            return jsonify({"error": "Invalid or expired session cookie", "message": str(e)}), 403
         return func(*args, **kwargs)
 
     return wrapper
@@ -53,6 +53,26 @@ def session_login():
     except Exception as e:
         return jsonify({"error": "Failed to create a session cookie", "message": str(e)}), 401
 
+
+@routes_user_auth.route('/register_click', methods=['POST'])
+@verify_token_middleware
+def register_click():
+    try:
+        data = request.get_json()
+        user_id = g.decoded_claims['uid'] if g.decoded_claims else None
+        if not user_id:
+            return jsonify({"error": "Unauthorized"}), 401
+
+        click_data = {
+            'user_id': user_id,
+            'page': data.get('page'),
+            'element_id': data.get('element_id', ""),
+            'extra_info': data.get('extra_info', {})
+        }
+        FirebaseService.log_click(click_data)
+        return jsonify({"status": "click registered"}), 200
+    except Exception as e:
+        return jsonify({"error": "Failed to register click", "message": str(e)}), 500
 
 # @routes_user_auth.route("/login", methods=['POST'])
 # def login_user():
