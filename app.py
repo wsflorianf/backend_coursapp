@@ -3,7 +3,6 @@ from flask_cors import CORS
 
 from routes.Auth import routes_user_auth
 from routes.Scrapers import routes_scrap
-from routes.token import routes_token
 from utils.FirebaseService import FirebaseService
 
 app = Flask(__name__)
@@ -15,7 +14,6 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True,
 
 
 app.register_blueprint(routes_user_auth)
-app.register_blueprint(routes_token)
 app.register_blueprint(routes_scrap)
 
 
