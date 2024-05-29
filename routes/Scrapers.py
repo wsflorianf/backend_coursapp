@@ -16,14 +16,18 @@ routes_scrap = Blueprint("routes_scrap", __name__)
 
 
 @routes_scrap.route("/search", methods=['GET'])
-@verify_token_middleware
+# @verify_token_middleware
 def search_courses():
     query = request.args.get('search-query', default='', type=str)
-    # Obtener los flags de activación para cada plataforma desde los parámetros de la URL
+
     udacity_enabled = request.args.get('udacity', 'false').lower() == 'true'
     coursera_enabled = request.args.get('coursera', 'false').lower() == 'true'
     domestika_enabled = request.args.get('domestika', 'false').lower() == 'true'
     platzi_enabled = request.args.get('platzi', 'false').lower() == 'true'
+
+    level = request.args.get('difficulty-level', default='', type=str).lower()
+    duration = request.args.get('duration', default='', type=str).lower()
+    language = request.args.get('language', default='', type=str).lower()
 
     results = {}
     times = {}
@@ -31,29 +35,25 @@ def search_courses():
     with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
         futures = {}
 
-        if udacity_enabled:
-            scraper = UdacityScraper()
-            start = datetime.now()
-            future = executor.submit(scraper.scrape, query)
-            futures[future] = ('udacity', start)
-
         if coursera_enabled:
             scraper = CourseraScraper()
             start = datetime.now()
-            future = executor.submit(scraper.scrape, query)
+            future = executor.submit(scraper.scrape, query, language, level, duration)
             futures[future] = ('coursera', start)
 
-        if domestika_enabled:
-            scraper = DomestikaScraper()
-            start = datetime.now()
-            future = executor.submit(scraper.scrape, query)
-            futures[future] = ('domestika', start)
+        if language != 'spanish':
+            if udacity_enabled:
+                scraper = UdacityScraper()
+                start = datetime.now()
+                future = executor.submit(scraper.scrape, query, level, duration)
+                futures[future] = ('udacity', start)
 
-        if platzi_enabled:
-            scraper = PlatziScraper()
-            start = datetime.now()
-            future = executor.submit(scraper.scrape, query)
-            futures[future] = ('platzi', start)
+        if language != 'english' and duration == '' and level == '':
+            if domestika_enabled:
+                scraper = DomestikaScraper()
+                start = datetime.now()
+                future = executor.submit(scraper.scrape, query)
+                futures[future] = ('domestika', start)
 
         for future in concurrent.futures.as_completed(futures):
             platform, start_time = futures[future]
@@ -66,4 +66,3 @@ def search_courses():
 
     WebDriverManager.close_driver()
     return jsonify(results=results, times=times)
-
