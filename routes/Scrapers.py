@@ -25,7 +25,7 @@ def search_courses():
     domestika_enabled = request.args.get('domestika', 'false').lower() == 'true'
     platzi_enabled = request.args.get('platzi', 'false').lower() == 'true'
 
-    level = request.args.get('difficulty-level', default='', type=str).lower()
+    level = request.args.get('level', default='', type=str).lower()
     duration = request.args.get('duration', default='', type=str).lower()
     language = request.args.get('language', default='', type=str).lower()
     price = request.args.get('price', default='', type=str).lower()
