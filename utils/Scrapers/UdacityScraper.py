@@ -10,7 +10,7 @@ from utils.WebDriverManager import WebDriverManager
 
 
 class UdacityScraper:
-    def scrape(self, query, level, duration):
+    def scrape(self, query, level, duration, price):
         driver = WebDriverManager.get_driver()
 
         level_map = {
@@ -26,11 +26,17 @@ class UdacityScraper:
             'months': 'months'
         }
 
+        price_map = {
+            'free': 'free',
+            'paid': 'paid'
+        }
+
         encoded_query = urllib.parse.quote(query)
         level_param = level_map.get(level, 'any-difficulty')
         duration_param = duration_map.get(duration, 'any-duration')
+        price_param = price_map.get(price, 'any-price')
 
-        url = f'https://www.udacity.com/catalog/all/any-price/any-school/any-skill/{level_param}/{duration_param}/any-type/relevance/page-1?searchValue={encoded_query}'
+        url = f'https://www.udacity.com/catalog/all/{price_param}/any-school/any-skill/{level_param}/{duration_param}/any-type/relevance/page-1?searchValue={encoded_query}'
         driver.get(url)
 
         WebDriverWait(driver, 10).until(

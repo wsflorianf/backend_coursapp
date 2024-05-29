@@ -28,27 +28,28 @@ def search_courses():
     level = request.args.get('difficulty-level', default='', type=str).lower()
     duration = request.args.get('duration', default='', type=str).lower()
     language = request.args.get('language', default='', type=str).lower()
+    price = request.args.get('price', default='', type=str).lower()
 
     results = {}
     times = {}
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
         futures = {}
-
-        if coursera_enabled:
-            scraper = CourseraScraper()
-            start = datetime.now()
-            future = executor.submit(scraper.scrape, query, language, level, duration)
-            futures[future] = ('coursera', start)
+        if price in ('', 'paid'):
+            if coursera_enabled:
+                scraper = CourseraScraper()
+                start = datetime.now()
+                future = executor.submit(scraper.scrape, query, language, level, duration)
+                futures[future] = ('coursera', start)
 
         if language != 'spanish':
             if udacity_enabled:
                 scraper = UdacityScraper()
                 start = datetime.now()
-                future = executor.submit(scraper.scrape, query, level, duration)
+                future = executor.submit(scraper.scrape, query, level, duration, price)
                 futures[future] = ('udacity', start)
 
-        if language != 'english' and duration == '' and level == '':
+        if language != 'english' and duration == '' and level == '' and price in ('', 'paid'):
             if domestika_enabled:
                 scraper = DomestikaScraper()
                 start = datetime.now()
